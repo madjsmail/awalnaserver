@@ -5,6 +5,6 @@ const isAuth = require("../middleware/isAuth");
 
 router.post("/signin", authController.postSignin);
 router.post("/login", authController.postLogin);
-router.get("/user", /*isAuth.requireAuth,*/ authController.getUser);
+router.get("/user", isAuth.requireAuth, authController.getUser);
 
 module.exports = router;
