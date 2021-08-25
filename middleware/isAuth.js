@@ -10,7 +10,7 @@ exports.requireAuth = (req, res, next) => {
   const token = authHeader.split(" ")[1];
   let decodedToken;
   try {
-    decodedToken = jwt.verify(token, "expressnuxtsecret");
+    decodedToken = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
   } catch (err) {
     err.statusCode = 500;
     throw err;
@@ -31,7 +31,7 @@ exports.isAdmin = (req, res, next) => {
   const token = authHeader.split(" ")[1];
   let decodedToken;
   try {
-    decodedToken = jwt.verify(token, "expressnuxtsecret");
+    decodedToken = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
   } catch (err) {
     err.statusCode = 500;
     throw err;
@@ -42,9 +42,9 @@ exports.isAdmin = (req, res, next) => {
     throw error;
   }
   req.role = decodedToken.isAdmin;
-  
+
   if (req.role) {
-     next();
+    next();
   } else {
     res.status(403).send({
       msg: "admin only"

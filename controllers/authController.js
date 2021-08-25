@@ -69,24 +69,47 @@ exports.postLogin = async (req, res, next) => {
       error.statusCode = 401;
       throw error;
     }
+
     loadedUser = user;
 
-    const comparePassword = bcrypt.compare(password, user.password);
 
-    if (!comparePassword) {
-      const error = new Error("password is not match!");
+    const match = await bcrypt.compare(password, user.password);
+
+
+    if (!match) {
       error.statusCode = 401;
       throw error;
     }
-    const token = jwt.sign({
-      email: loadedUser.email,
-      isAdmin: loadedUser.isAdmin
-    }, "expressnuxtsecret", {
-      expiresIn: "200m",
-    });
-    res.status(200).json({
-      token: token
-    });
+
+
+    if (match) {
+      // Send JWT 
+
+      const token = jwt.sign({
+        email: loadedUser.email,
+        isAdmin: loadedUser.isAdmin
+      }, process.env.SECRETORPRIVATEKEY, {
+        expiresIn: "200m",
+      });
+
+      return res.status(200).json({
+        token: token
+      });
+    } else {
+      // response is OutgoingMessage object that server response http request
+      return response.json({
+        success: false,
+        message: 'passwords do not match'
+      });
+    }
+
+
+    // if (!comparePassword) {
+    //   const error = new Error("password is not match!");
+    //   error.statusCode = 401;
+    //   throw error;
+    // }
+
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
