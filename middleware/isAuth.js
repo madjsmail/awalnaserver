@@ -26,7 +26,7 @@ exports.requireAuth = (req, res, next) => {
 
 exports.isAdmin = (req, res, next) => {
 
-  requireAuth()
+  this.requireAuth
   const authHeader = req.get("Authorization");
   const token = authHeader.split(" ")[1];
   let decodedToken;
