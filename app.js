@@ -27,6 +27,7 @@
  //   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
  //   next();
  // });
+ 
 
  app.use("/api/auth/", authRouter);
  app.use("/api/Word/", wordRouter);
