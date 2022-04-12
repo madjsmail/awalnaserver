@@ -1,56 +1,58 @@
 const bcrypt = require("bcryptjs");
 const userModel = require("../models/userModel");
 const jwt = require("jsonwebtoken");
+const NodeCouchdb = require('node-couchdb');
+
+const couch = require('../models/db');
 
 
 
+// exports.postSignin = async (req, res, next) => {
 
-exports.postSignin = async (req, res, next) => {
+//   const {
+//     fullname,
+//     email,
+//     password,
+//     isAdmin
+//   } = req.body;
+//   try {
+//     const exsitUser = await userModel.findOne({
+//       email: email
+//     });
+//     if (exsitUser) {
+//       const error = new Error(
+//         "Eamil already exist, please pick another email!"
+//       );
+//       return res.status(409).json({
+//         error: "Eamil already exist, please pick another email! ",
+//       });
+//       error.statusCode = 409;
+//       throw error;
+//     }
 
-  const {
-    fullname,
-    email,
-    password,
-    isAdmin
-  } = req.body;
-  try {
-    const exsitUser = await userModel.findOne({
-      email: email
-    });
-    if (exsitUser) {
-      const error = new Error(
-        "Eamil already exist, please pick another email!"
-      );
-      return res.status(409).json({
-        error: "Eamil already exist, please pick another email! ",
-      });
-      error.statusCode = 409;
-      throw error;
-    }
+//     const hashedPassword = await bcrypt.hash(password, 12);
+//     const user = new userModel({
+//       fullname: fullname,
+//       email: email,
+//       password: hashedPassword,
+//       isAdmin: isAdmin
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const user = new userModel({
-      fullname: fullname,
-      email: email,
-      password: hashedPassword,
-      isAdmin: isAdmin
-
-    });
-    const result = await user.save();
-    res.status(200).json({
-      message: "User created",
-      user: {
-        id: result._id,
-        email: result.email
-      },
-    });
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
-};
+//     });
+//     const result = await user.save();
+//     res.status(200).json({
+//       message: "User created",
+//       user: {
+//         id: result._id,
+//         email: result.email
+//       },
+//     });
+//   } catch (err) {
+//     if (!err.statusCode) {
+//       err.statusCode = 500;
+//     }
+//     next(err);
+//   }
+// };
 
 let loadedUser;
 exports.postLogin = async (req, res, next) => {
@@ -58,11 +60,26 @@ exports.postLogin = async (req, res, next) => {
     email,
     password
   } = req.body;
-
+  console.log(email, password);
   try {
-    const user = await userModel.findOne({
-      email: email
+    // const user = await userModel.findOne({
+    //   email: email
+    // });
+
+
+    const user = await couch.get("users", email.toString().trim()).then(data => {
+      return data.data;
     });
+
+
+    console.log("***********************");
+    console.log(user);
+
+
+
+
+
+
 
     if (!user) {
       const error = new Error("user with this email not found!");
@@ -75,10 +92,15 @@ exports.postLogin = async (req, res, next) => {
 
     const match = await bcrypt.compare(password, user.password);
 
+    console.log("***********************");
 
     if (!match) {
-      error.statusCode = 401;
-      throw error;
+      // new error;
+      // error.statusCode = 401;
+      //throw error;
+      res.json({
+        error: "check your email and password"
+      });
     }
 
 
@@ -86,9 +108,9 @@ exports.postLogin = async (req, res, next) => {
       // Send JWT 
 
       const token = jwt.sign({
-        email: loadedUser.email,
-        isAdmin: loadedUser.isAdmin
-      }, process.env.SECRETORPRIVATEKEY, {
+        email: loadedUser._id,
+        isAdmin: loadedUser.role
+      }, process.env.SECRETORPRIVATEKEY || "SECRETORPRIVATEKEY", {
         expiresIn: "200m",
       });
 
@@ -99,7 +121,7 @@ exports.postLogin = async (req, res, next) => {
       // response is OutgoingMessage object that server response http request
       return response.json({
         success: false,
-        message: 'passwords do not match'
+        message: 'ERROR auth check email and password'
       });
     }
 
@@ -120,12 +142,14 @@ exports.postLogin = async (req, res, next) => {
 };
 
 exports.getUser = (req, res, next) => {
+  console.log("***********************");
+  console.log(loadedUser);
   res.status(200).json({
     user: {
-      id: loadedUser._id,
-      fullname: loadedUser.fullname,
-      email: loadedUser.email,
-      isAdmin: loadedUser.isAdmin
+      // id: loadedUser._id,
+      // fullname: loadedUser.lastName,
+      email: loadedUser._id,
+      role: loadedUser.role
     },
   });
 };
