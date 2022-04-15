@@ -1,11 +1,9 @@
 const bcrypt = require("bcryptjs");
 const userModel = require("../models/userModel");
 const jwt = require("jsonwebtoken");
-const NodeCouchdb = require('node-couchdb');
+const NodeCouchdb = require("node-couchdb");
 
-const couch = require('../models/db');
-
-
+const couch = require("../models/db");
 
 // exports.postSignin = async (req, res, next) => {
 
@@ -56,30 +54,21 @@ const couch = require('../models/db');
 
 let loadedUser;
 exports.postLogin = async (req, res, next) => {
-  const {
-    email,
-    password
-  } = req.body;
+  const { email, password } = req.body;
   console.log(email, password);
   try {
     // const user = await userModel.findOne({
     //   email: email
     // });
 
-
-    const user = await couch.get("users", email.toString().trim()).then(data => {
-      return data.data;
-    });
-
+    const user = await couch
+      .get("users", email.toString().trim())
+      .then((data) => {
+        return data.data;
+      });
 
     console.log("***********************");
     console.log(user);
-
-
-
-
-
-
 
     if (!user) {
       const error = new Error("user with this email not found!");
@@ -88,7 +77,6 @@ exports.postLogin = async (req, res, next) => {
     }
 
     loadedUser = user;
-
 
     const match = await bcrypt.compare(password, user.password);
 
@@ -99,45 +87,47 @@ exports.postLogin = async (req, res, next) => {
       // error.statusCode = 401;
       //throw error;
       res.json({
-        error: "check your email and password"
+        error: "check your email and password",
       });
     }
 
-
     if (match) {
-      // Send JWT 
+      // Send JWT
 
-      const token = jwt.sign({
-        email: loadedUser._id,
-        isAdmin: loadedUser.role
-      }, process.env.SECRETORPRIVATEKEY || "SECRETORPRIVATEKEY", {
-        expiresIn: "200m",
-      });
+      const token = jwt.sign(
+        {
+          email: loadedUser._id,
+          role: loadedUser.role,
+          id: loadedUser.userID,
+        },
+        process.env.SECRETORPRIVATEKEY || "SECRETORPRIVATEKEY",
+        {
+          expiresIn: "20000m",
+        }
+      );
 
       return res.status(200).json({
-        token: token
+        token: token,
       });
     } else {
       // response is OutgoingMessage object that server response http request
-      return response.json({
+      return res.json({
         success: false,
-        message: 'ERROR auth check email and password'
+        message: "ERROR auth check email and password",
       });
     }
-
 
     // if (!comparePassword) {
     //   const error = new Error("password is not match!");
     //   error.statusCode = 401;
     //   throw error;
     // }
-
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
     }
-    next(err);
 
+    next(err);
   }
 };
 
@@ -148,8 +138,9 @@ exports.getUser = (req, res, next) => {
     user: {
       // id: loadedUser._id,
       // fullname: loadedUser.lastName,
+      id: loadedUser.userID,
       email: loadedUser._id,
-      role: loadedUser.role
+      role: loadedUser.role,
     },
   });
 };

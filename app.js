@@ -1,24 +1,26 @@
 const path = require("path");
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("./swagger.json");
 const express = require("express");
-require('dotenv').config({
-  path: path.resolve(__dirname + '/.env')
+require("dotenv").config({
+  path: path.resolve(__dirname + "/.env"),
 });
-var cors = require('cors');
+var cors = require("cors");
 // routes
 const authRouter = require("./routes/authRouter");
 const assetRouter = require("./routes/assetRouter");
 const userRouter = require("./routes/userRouter");
 
-
-
-
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({
-  extended: true
-}));
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // app.use((req, res, next) => {
 //   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -35,11 +37,11 @@ app.use("/api/asset/", assetRouter);
 app.use("/api/user/", userRouter);
 
 process
-  .on('unhandledRejection', (reason, p) => {
-    console.error(reason, 'Unhandled Rejection at Promise', p);
+  .on("unhandledRejection", (reason, p) => {
+    console.error(reason, "Unhandled Rejection at Promise", p);
   })
-  .on('uncaughtException', err => {
-    console.error(err, 'Uncaught Exception thrown');
+  .on("uncaughtException", (err) => {
+    console.error(err, "Uncaught Exception thrown");
     process.exit(1);
   });
 process.setMaxListeners(0);
@@ -50,7 +52,7 @@ app.use((error, req, res, next) => {
   const data = error.data;
   res.status(status).json({
     message: message,
-    data: data
+    data: data,
   });
 });
 
@@ -70,7 +72,5 @@ app.use((error, req, res, next) => {
 
 try {
   app.listen(process.env.PORT || 8080);
-  console.log('up and running on port ' + (process.env.PORT || 8080));
-} catch (error) {
-
-}
+  console.log("up and running on port " + (process.env.PORT || 8080));
+} catch (error) {}

@@ -7,7 +7,8 @@ exports.requireAuth = (req, res, next) => {
     error.statusCode = 401;
     throw error;
   }
-  const token = authHeader.split(" ")[1];
+  const token = authHeader;
+  console.log(authHeader);
   let decodedToken;
   try {
     decodedToken = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
@@ -21,14 +22,19 @@ exports.requireAuth = (req, res, next) => {
     throw error;
   }
   req.userId = decodedToken.userId;
+  console.log("req.userId" + req.userId);
   next();
 };
 
 exports.isAdmin = (req, res, next) => {
-
-  this.requireAuth
   const authHeader = req.get("Authorization");
-  const token = authHeader.split(" ")[1];
+  if (!authHeader) {
+    const error = new Error("Not authenticated.");
+    error.statusCode = 401;
+    throw error;
+  }
+  const token = authHeader;
+  console.log(authHeader);
   let decodedToken;
   try {
     decodedToken = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
@@ -41,13 +47,80 @@ exports.isAdmin = (req, res, next) => {
     error.statusCode = 401;
     throw error;
   }
-  req.role = decodedToken.isAdmin;
 
-  if (req.role) {
+  // console.log("decodedToken " + decodedToken.role);
+  // next();
+
+  if (decodedToken.role === "admin") {
     next();
   } else {
     res.status(403).send({
-      msg: "admin only"
+      msg: "admin only",
     });
   }
-}
+};
+
+exports.isOwner = async (req, res, next) => {
+  const authHeader = req.get("Authorization");
+  if (!authHeader) {
+    const error = new Error("Not authenticated.");
+    error.statusCode = 401;
+    throw error;
+  }
+  const token = authHeader;
+  console.log(authHeader);
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
+  } catch (err) {
+    err.statusCode = 500;
+    throw err;
+  }
+  if (!decodedToken) {
+    const error = new Error("Not authenticated.");
+    error.statusCode = 401;
+    throw error;
+  }
+  // req.userId = decodedToken.userId;
+  // console.log("req.userId" + req.userId);
+  // next();
+  console.log(req.params.patientID);
+  console.log(decodedToken);
+
+  if (decodedToken.id == req.params.patientID) {
+    console.log("hererefzf");
+    next();
+  } else {
+    res.status(403).send({
+      msg: "you are not allowed this action",
+    });
+  }
+};
+
+exports.decodedToken = (req, res, next) => {
+  const authHeader = req.get("Authorization");
+  if (!authHeader) {
+    const error = new Error("Not authenticated.");
+    error.statusCode = 401;
+    throw error;
+  }
+  const token = authHeader;
+  console.log(authHeader);
+  let decodedToken;
+  try {
+    decodedToken = jwt.verify(token, process.env.SECRETORPRIVATEKEY);
+  } catch (err) {
+    err.statusCode = 500;
+    throw err;
+  }
+  if (!decodedToken) {
+    const error = new Error("Not authenticated.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  // console.log("decodedToken " + decodedToken.role);
+  // next();
+
+  return decodedToken;
+};
